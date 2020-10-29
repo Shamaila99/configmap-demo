@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mila-configmap-demo
+  namespace: default
+data:
+  conf.text: hello, I am a config map

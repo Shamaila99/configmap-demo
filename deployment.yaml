@@ -1,0 +1,70 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: mila-configmap-demo
+spec:
+  selector:
+    app: mila-configmap-demo
+  ports:
+    - protocol: TCP
+      port: 8085
+  type: NodePort
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mila-configmap-demo
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: mila-configmap-demo
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mila-configmap-demo
+    spec:
+      containers:
+        - name: mila-configmap
+          image: milafridi/configmap-demo:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8085
+          env:
+            - name: env.namespace
+              value: default
+          volumeMounts:
+            - name: config
+              mountPath: /config
+      volumes:
+        - name: config
+          configMap:
+            name: mila-configmap-demo
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: default
+  name: pod-reader
+rules:
+  - apiGroups: ["", "extensions", "apps"]
+    resources: ["configmaps", "pods", "services", "endpoints", "secrets"]
+    verbs: ["get", "list", "watch"]
+
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: pod-reader-binding
+  namespace: default
+subjects:
+  - kind: ServiceAccount
+    name: default
+    apiGroup: ""
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: ""
